@@ -14,15 +14,52 @@ def plotInput(focused, unfocused):
     
     ax1 = fig.add_subplot(1, 2, 1)
     p1 = ax1.imshow(focused, vmin = vmin, vmax = vmax, cmap='gray_r')
+    p1 = ax1.imshow(focused, cmap='gray_r')
+
     plt.title('focused')
 
     ax2 = fig.add_subplot(1, 2, 2)
-    p2 = ax2.imshow(unfocused, vmin = vmin, vmax = vmax, cmap='gray_r')
+    p2 = ax2.imshow(unfocused, cmap='gray_r')
+    p2 = ax1.imshow(focused, vmin = vmin, vmax = vmax, cmap='gray_r')
     plt.title('defocused')
     
     cbar_ax = fig.add_axes([0.95, 0.3, 0.05, 0.4])
     fig.colorbar(p2,  cbar_ax)
 
+    plt.show()
+    
+def plotCompare(x_real, x_fake, input_cond, n_samples):
+    # plot images
+    fig = plt.figure(figsize=(15, 15))
+    for i in range(n_samples + 2):
+        fig.add_subplot(n_samples + 2, n_samples + 2, (i*(n_samples+2))+1)
+        plt.axis('off')
+        plt.imshow(input_cond[i,:, :,0], cmap='gray_r')
+        for j in range(n_samples):
+            idx = (n_samples+2)*i + j + 2
+            fig.add_subplot(n_samples + 2, n_samples + 2, idx)
+            plt.axis('off')
+            plt.imshow(x_fake[i,j, :, :, 0], cmap='gray_r')
+        fig.add_subplot(n_samples + 2, n_samples + 2, idx + 1)
+        plt.imshow(x_real[i, :, :, 0], cmap='gray_r')   
+        plt.axis('off')
+    plt.show()
+    
+def plotCompare(x_real, x_fake, input_cond, n_samples):
+    # plot images
+    fig = plt.figure(figsize=(15, 15))
+    for i in range(n_samples + 2):
+        fig.add_subplot(n_samples + 2, n_samples + 2, (i*(n_samples+2))+1)
+        plt.axis('off')
+        plt.imshow(input_cond[i,:, :,0], cmap='gray_r')
+        for j in range(n_samples):
+            idx = (n_samples+2)*i + j + 2
+            fig.add_subplot(n_samples + 2, n_samples + 2, idx)
+            plt.axis('off')
+            plt.imshow(x_fake[i,j, :, :, 0], cmap='gray_r')
+        fig.add_subplot(n_samples + 2, n_samples + 2, idx + 1)
+        plt.imshow(x_real[i, :, :, 0], cmap='gray_r')   
+        plt.axis('off')
     plt.show()
     
 def calcMinMax(focused, unfocused):

@@ -41,7 +41,7 @@ class cGAN:
         # define model
         model = Model([input_x, input_cond], y)
         # compile model
-        opt = Adam(lr=0.00005) #0.0002 and beta_1 0.5
+        opt = Adam(lr=0.0002) #0.0002 and beta_1 0.5
         model.compile(loss='binary_crossentropy', optimizer=opt, metrics=['accuracy'])
         return model
     def generator(self):
@@ -105,7 +105,7 @@ class cGAN:
         return input_z
     def generate_fake_samples(self, generator, defocused, latent_dim, n_samples):
         idx = randint(0, defocused.shape[0], n_samples)
-        input_cond = defocused[idx,:,:,:] ##### should last be zero or :?
+        input_cond = defocused[idx,:,:,:]
         input_z = self.generate_latent(latent_dim, n_samples)
         # predict outputs
         x_fake = generator.predict([input_z, input_cond])
@@ -116,13 +116,13 @@ class cGAN:
         #defocused = data[1,:,:,:]
         #defocused = np.expand_dims(input_cond, axis = -1)
         idx = randint(0, defocused.shape[0], n_samples)
-        input_cond = defocused[idx,:,:,:] ##### should last be zero or :?
+        input_cond = defocused[idx,:,:,:]
         input_z = self.generate_latent(latent_dim, n_samples)
         # create class labels
         y_gan = ones((n_samples, 1))
         return [input_z, input_cond], y_gan
 
-    def train(self, g_model, d_model, gan_model, real, input_cond, latent_dim, n_epochs, n_batch):
+    def train(self, g_model, d_model, gan_model, real, input_cond, latent_dim, n_epochs, n_batch, save):
         bat_per_epo = int(real.shape[0] / n_batch) #check
         half_batch = int(n_batch / 2)
         g_loss = np.zeros(n_epochs)
@@ -153,20 +153,26 @@ class cGAN:
             stop = timeit.default_timer()
             print('Time: %.2f min' % ((stop - start)/60)) 
         # save the generator model
-        g_model.save('cgan_regular_50.h5') #save somewhere
+        g_model.save('./models/cgan_'+ save + '.h5') #save somewhere
         # save loss history
         loss = np.array([d_loss_real, d_loss_fake, g_loss])
-        np.save('cgan_regular_50', loss)
-    def save_plot(self, examples, n):
-        # plot images
-        fig = plt.figure(figsize=(15, 15))
-        for i in range(n * n):
-            # define subplot
-            fig.add_subplot(n, n, 1 + i)
-            #plt.subplot(n, n, 1 + i)
-            # turn off axis
-            plt.axis('off')
-            # plot raw pixel data
-            plt.imshow(examples[i, :, :, 0], cmap='gray_r')
-        plt.show()
+        np.save('./models/cgan_loss_' + save, loss)
+    def generate_fakes_givenOne(self, generator, focused, defocused, latent_dim, n_samples):
+        idx = randint(0, defocused.shape[0], 1)
+        x_real = focused[idx,:,:,:]
+        input_cond = defocused[idx,:,:,:] ##### should last be zero or :?
+        input_cond = np.repeat(input_cond, n_samples, axis=0)
+        input_z = self.generate_latent(latent_dim, n_samples)
+        x_fake = generator.predict([input_z, input_cond])
+        return x_real, x_fake, input_cond[0,:,:,:]
+    def generate_fakes_givenMany(self, generator, focused, defocused, latent_dim, n_examples):
+        n_samples = n_examples-2
+        x_real_many = np.zeros((n_examples, focused.shape[1], focused.shape[2], focused.shape[3]))
+        input_cond_many = np.zeros((n_examples, focused.shape[1], focused.shape[2], focused.shape[3]))
+        x_fake_many = np.zeros((n_examples, n_samples, focused.shape[1], focused.shape[2], focused.shape[3]))
+        
+        for i in range(n_examples):
+            x_real_many[i,:,:,:], x_fake_many[i,:,:,:,:], input_cond_many[i,:,:,:] = self.generate_fakes_givenOne(generator, focused, defocused, latent_dim, n_samples)
+        return x_real_many, x_fake_many, input_cond_many
+         
         
